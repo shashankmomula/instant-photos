@@ -1,0 +1,11 @@
+# Minimal requirements for photo gallery (AI disabled)
+# These are the only packages needed for current functionality
+
+fastapi>=0.104.1
+uvicorn>=0.24.0
+python-multipart>=0.0.6
+google-cloud-storage>=3.9.0
+python-dotenv>=1.0.0
+
+# Note: AI packages (insightface, faiss-cpu, opencv-python, numpy, Pillow) 
+# are not needed when AI matching is disabled
