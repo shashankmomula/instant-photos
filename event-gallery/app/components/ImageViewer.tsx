@@ -3,6 +3,26 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
+// Force-download an image without opening the cloud URL in a new tab
+async function downloadImage(url: string) {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = url.split('/').pop() || 'photo.jpg';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    console.error('Failed to download image', err);
+  }
+}
+
 interface ImageViewerProps {
   photos: string[];
   initialIndex: number;
@@ -90,14 +110,14 @@ export function ImageViewer({ photos, initialIndex, onClose }: ImageViewerProps)
 
       {/* Bottom bar with download */}
       <div className="px-4 pb-6 flex justify-center bg-black/50">
-        <a
-          href={currentUrl}
-          download
+        <button
+          type="button"
+          onClick={() => downloadImage(currentUrl)}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-gray-900 font-semibold shadow-lg hover:bg-gray-100 transition-colors"
         >
           <Download className="h-5 w-5" />
           <span>Download Photo</span>
-        </a>
+        </button>
       </div>
     </div>
   );

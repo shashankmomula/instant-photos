@@ -1,5 +1,25 @@
 'use client';
 
+// Force-download an image without opening the cloud URL in a new tab
+async function downloadImage(url: string) {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = url.split('/').pop() || 'photo.jpg';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    console.error('Failed to download image', err);
+  }
+}
+
 interface PhotoGridProps {
   photos: string[];
   isLoading?: boolean;
@@ -36,14 +56,16 @@ export function PhotoGrid({ photos, isLoading = false, onPhotoClick }: PhotoGrid
           </button>
 
           {/* Download button appears on hover in the bottom-right corner */}
-          <a
-            href={url}
-            download
-            onClick={(e) => e.stopPropagation()}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              downloadImage(url);
+            }}
             className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 bg-black/70 text-white text-sm px-3 py-1 rounded-full transition-opacity duration-300 cursor-pointer"
           >
             <span className="font-medium">Download</span>
-          </a>
+          </button>
         </div>
       ))}
     </div>
