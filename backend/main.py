@@ -12,6 +12,8 @@ import json
 from typing import List
 import logging
 import random
+from datetime import timedelta
+from urllib.parse import urlparse
 from google.cloud import storage
 from google.oauth2 import service_account
 from dotenv import load_dotenv
@@ -296,6 +298,90 @@ async def list_event_photos(event_id: str = Query(..., description="Event identi
     except Exception as e:
         logger.error(f"❌ Failed to list photos: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/download-photo")
+async def generate_download_url(
+    photo_url: str = Query(..., description="Public GCS photo URL to generate a signed download URL for"),
+):
+    """
+    Generate a short-lived signed URL for downloading a photo from GCS.
+
+    The signed URL includes Content-Disposition: attachment so that browsers
+    (desktop and mobile) treat it as a file download rather than opening it
+    in a new tab.
+    """
+    try:
+        bucket_name = os.getenv("GCS_BUCKET_NAME", "event-photos-demo")
+
+        # Parse the GCS URL to extract the bucket and blob name
+        try:
+            parsed = urlparse(photo_url)
+            # Expect path like "/<bucket>/<blob-name>"
+            path_parts = parsed.path.lstrip("/").split("/", 1)
+            if len(path_parts) != 2:
+                raise ValueError("Invalid GCS URL path format")
+
+            bucket_from_url, blob_name = path_parts
+            if bucket_from_url != bucket_name:
+                logger.warning(
+                    f"Bucket in URL ({bucket_from_url}) does not match configured bucket ({bucket_name}). "
+                    "Using configured bucket."
+                )
+        except Exception as e:
+            logger.error(f"❌ Failed to parse photo_url '{photo_url}': {e}")
+            raise HTTPException(status_code=400, detail="Invalid photo_url format")
+
+        # Initialize GCS client (reuse the same pattern as list-photos)
+        try:
+            credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+            credentials = None
+
+            if credentials_path:
+                try:
+                    creds_dict = json.loads(credentials_path)
+                    credentials = service_account.Credentials.from_service_account_info(creds_dict)
+                    logger.info("✅ Using credentials from environment variable (JSON)")
+                except (json.JSONDecodeError, TypeError):
+                    if os.path.exists(credentials_path):
+                        credentials = service_account.Credentials.from_service_account_file(credentials_path)
+                        logger.info(f"✅ Using credentials from file: {credentials_path}")
+                    else:
+                        logger.warning(f"⚠️ Credentials path not found: {credentials_path}")
+
+            if credentials:
+                storage_client = storage.Client(credentials=credentials, project=credentials.project_id)
+            else:
+                logger.warning("⚠️ Trying application default credentials for signed URL generation...")
+                storage_client = storage.Client()
+
+            bucket = storage_client.bucket(bucket_name)
+            blob = bucket.blob(blob_name)
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize GCS client or blob for download: {e}")
+            raise HTTPException(status_code=500, detail="Failed to initialize GCS client for download")
+
+        # Derive a nice filename from the blob name (last path segment)
+        filename = os.path.basename(blob_name) if "/" in blob_name else blob_name
+
+        try:
+            signed_url = blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(minutes=10),
+                method="GET",
+                response_disposition=f'attachment; filename="{filename}"',
+            )
+        except Exception as e:
+            logger.error(f"❌ Failed to generate signed URL: {e}")
+            raise HTTPException(status_code=500, detail="Failed to generate signed download URL")
+
+        return {"signed_url": signed_url}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Unexpected error in /download-photo: {e}")
+        raise HTTPException(status_code=500, detail="Unexpected error generating download URL")
 
 
 @app.get("/status")
