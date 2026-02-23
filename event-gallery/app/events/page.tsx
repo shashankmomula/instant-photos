@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Sparkles, Music, Heart, Users, QrCode } from 'lucide-react';
+import { Sparkles, Music, Heart, Users, QrCode, Loader } from 'lucide-react';
 import { GlobalQRCode } from '@/app/components/GlobalQRCode';
 
 // Define your wedding events
@@ -40,6 +40,38 @@ const WEDDING_EVENTS = [
 
 export default function EventsListPage() {
   const [showQR, setShowQR] = useState(false);
+  const [eventPhotoCounts, setEventPhotoCounts] = useState<Record<string, number>>({});
+  const [isCheckingPhotos, setIsCheckingPhotos] = useState(true);
+
+  // Check if photos exist for each event
+  useEffect(() => {
+    const checkEventPhotos = async () => {
+      setIsCheckingPhotos(true);
+      const counts: Record<string, number> = {};
+
+      // Check all events in parallel
+      const photoChecks = WEDDING_EVENTS.map(async (event) => {
+        try {
+          const res = await fetch(`/api/photos?event=${event.id}`);
+          if (res.ok) {
+            const data = await res.json();
+            counts[event.id] = data.count || 0;
+          } else {
+            counts[event.id] = 0;
+          }
+        } catch (error) {
+          console.error(`Error checking photos for ${event.id}:`, error);
+          counts[event.id] = 0;
+        }
+      });
+
+      await Promise.all(photoChecks);
+      setEventPhotoCounts(counts);
+      setIsCheckingPhotos(false);
+    };
+
+    checkEventPhotos();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
@@ -74,10 +106,17 @@ export default function EventsListPage() {
       {/* Events Grid */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {WEDDING_EVENTS.map((event) => {
-            const IconComponent = event.icon;
-            const isEnabled = event.id === 'haldi';
-            return (
+          {isCheckingPhotos ? (
+            <div className="col-span-full flex items-center justify-center py-12">
+              <Loader className="h-8 w-8 animate-spin text-indigo-600" />
+              <span className="ml-3 text-gray-600">Checking available photos...</span>
+            </div>
+          ) : (
+            WEDDING_EVENTS.map((event) => {
+              const IconComponent = event.icon;
+              const photoCount = eventPhotoCounts[event.id] || 0;
+              const isEnabled = photoCount > 0;
+              return (
               <div key={event.id}>
                 {isEnabled ? (
                   <Link
@@ -119,7 +158,8 @@ export default function EventsListPage() {
                 )}
               </div>
             );
-          })}
+          })
+          )}
         </div>
 
         {/* Info Banner */}
