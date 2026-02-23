@@ -1,29 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ImageViewerProps {
   photos: string[];
   initialIndex: number;
   onClose: () => void;
-}
-
-async function requestDownload(url: string) {
-  try {
-    const res = await fetch(`/api/download?photoUrl=${encodeURIComponent(url)}`);
-    if (!res.ok) {
-      throw new Error('Failed to get download URL');
-    }
-    const data = await res.json();
-    if (!data.signedUrl) {
-      throw new Error('No signedUrl returned');
-    }
-    window.location.href = data.signedUrl;
-  } catch (err) {
-    console.error('Download failed', err);
-    alert('Unable to download this photo right now. Please try again.');
-  }
 }
 
 export function ImageViewer({ photos, initialIndex, onClose }: ImageViewerProps) {
@@ -103,18 +86,6 @@ export function ImageViewer({ photos, initialIndex, onClose }: ImageViewerProps)
             <ChevronRight className="h-8 w-8" />
           </button>
         )}
-      </div>
-
-      {/* Bottom bar with download */}
-      <div className="px-4 pb-6 flex justify-center bg-black/50">
-        <button
-          type="button"
-          onClick={() => requestDownload(currentUrl)}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-gray-900 font-semibold shadow-lg hover:bg-gray-100 transition-colors"
-        >
-          <Download className="h-5 w-5" />
-          <span>Download Photo</span>
-        </button>
       </div>
     </div>
   );

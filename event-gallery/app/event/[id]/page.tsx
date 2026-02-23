@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { PhotoGrid } from "@/app/components/PhotoGrid";
 import { ImageViewer } from "@/app/components/ImageViewer";
+import { Toast } from "@/app/components/Toast";
 import { ArrowLeft, Loader } from "lucide-react";
 
 export default function EventGallery() {
@@ -15,6 +16,7 @@ export default function EventGallery() {
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
   const [error, setError] = useState<string>("");
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [showToast, setShowToast] = useState(false);
 
   // Fetch event photos on mount
   useEffect(() => {
@@ -28,6 +30,10 @@ export default function EventGallery() {
         }
         const data = await res.json();
         setPhotos(data.photos || []);
+        // Show toast when photos are loaded
+        if (data.photos && data.photos.length > 0) {
+          setShowToast(true);
+        }
       } catch (err) {
         console.error("Error fetching photos:", err);
         setError("Failed to load event photos. Please try again.");
@@ -59,6 +65,15 @@ export default function EventGallery() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Toast notification */}
+      {showToast && (
+        <Toast
+          message="Long press on image to download"
+          duration={5000}
+          onClose={() => setShowToast(false)}
+        />
+      )}
+
       {/* Header */}
       <div className="bg-white shadow-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

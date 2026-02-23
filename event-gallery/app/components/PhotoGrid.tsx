@@ -6,24 +6,6 @@ interface PhotoGridProps {
   onPhotoClick?: (index: number) => void;
 }
 
-async function requestDownload(url: string) {
-  try {
-    const res = await fetch(`/api/download?photoUrl=${encodeURIComponent(url)}`);
-    if (!res.ok) {
-      throw new Error('Failed to get download URL');
-    }
-    const data = await res.json();
-    if (!data.signedUrl) {
-      throw new Error('No signedUrl returned');
-    }
-    // Navigate to the signed URL so the browser handles Content-Disposition: attachment
-    window.location.href = data.signedUrl;
-  } catch (err) {
-    console.error('Download failed', err);
-    alert('Unable to download this photo right now. Please try again.');
-  }
-}
-
 export function PhotoGrid({ photos, isLoading = false, onPhotoClick }: PhotoGridProps) {
   if (photos.length === 0 && !isLoading) {
     return (
@@ -51,18 +33,6 @@ export function PhotoGrid({ photos, isLoading = false, onPhotoClick }: PhotoGrid
               className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
             />
-          </button>
-
-          {/* Download button appears on hover in the bottom-right corner */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              requestDownload(url);
-            }}
-            className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 bg-black/70 text-white text-sm px-3 py-1 rounded-full transition-opacity duration-300 cursor-pointer"
-          >
-            <span className="font-medium">Download</span>
           </button>
         </div>
       ))}
