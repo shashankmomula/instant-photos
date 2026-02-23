@@ -60,14 +60,18 @@ async def lifespan(app: FastAPI):
     """Lifespan event handler for startup and shutdown"""
     # Startup
     logger.info("🚀 Starting Event Photo Gallery API (MVP)...")
-    load_metadata()
-    logger.info("✅ Startup complete")
+    try:
+        load_metadata()
+        logger.info("✅ Startup complete")
+    except Exception as e:
+        logger.error(f"⚠️ Startup warning: {e}")
     yield
     # Shutdown (if needed)
     logger.info("🛑 Shutting down...")
 
 
 # Initialize FastAPI app
+# Note: In serverless (Vercel), lifespan is disabled via Mangum
 app = FastAPI(title="Event Photo Gallery API (MVP)", version="1.0.0", lifespan=lifespan)
 
 # Add CORS middleware
@@ -210,15 +214,28 @@ async def list_event_photos(event_id: str = Query(..., description="Event identi
         # Initialize GCS client with explicit credentials
         try:
             credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+            credentials = None
             
-            if credentials_path and os.path.exists(credentials_path):
-                # Use explicit credentials file
-                credentials = service_account.Credentials.from_service_account_file(credentials_path)
+            # Check if credentials_path is a JSON string (Vercel environment variable)
+            if credentials_path:
+                try:
+                    # Try to parse as JSON string
+                    creds_dict = json.loads(credentials_path)
+                    # Create credentials from dict
+                    credentials = service_account.Credentials.from_service_account_info(creds_dict)
+                    logger.info("✅ Using credentials from environment variable (JSON)")
+                except (json.JSONDecodeError, TypeError):
+                    # Not JSON, try as file path
+                    if os.path.exists(credentials_path):
+                        credentials = service_account.Credentials.from_service_account_file(credentials_path)
+                        logger.info(f"✅ Using credentials from file: {credentials_path}")
+                    else:
+                        logger.warning(f"⚠️ Credentials path not found: {credentials_path}")
+            
+            if credentials:
                 storage_client = storage.Client(credentials=credentials, project=credentials.project_id)
-                logger.info(f"✅ Using credentials from: {credentials_path}")
             else:
                 # Fallback to application default credentials
-                logger.warning(f"⚠️ GOOGLE_APPLICATION_CREDENTIALS not found or invalid: {credentials_path}")
                 logger.warning("⚠️ Trying application default credentials...")
                 storage_client = storage.Client()
             
