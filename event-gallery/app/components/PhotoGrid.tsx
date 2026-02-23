@@ -35,13 +35,14 @@ export function PhotoGrid({ photos, isLoading = false, onPhotoClick }: PhotoGrid
             />
           </button>
 
+          {/* Download button appears on hover in the bottom-right corner */}
           <a
             href={url}
             download
             onClick={(e) => e.stopPropagation()}
-            className="absolute inset-0 opacity-0 hover:opacity-100 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 cursor-pointer"
+            className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 bg-black/70 text-white text-sm px-3 py-1 rounded-full transition-opacity duration-300 cursor-pointer"
           >
-            <span className="text-white font-medium">Download</span>
+            <span className="font-medium">Download</span>
           </a>
         </div>
       ))}

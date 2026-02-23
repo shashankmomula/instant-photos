@@ -101,9 +101,11 @@ export default function EventGallery() {
             </div>
           ) : photos.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600 text-lg mb-2">No photos found for this event.</p>
+              <p className="text-gray-700 text-lg mb-2">
+                No photos are available for this event yet.
+              </p>
               <p className="text-sm text-gray-500">
-                Make sure photos are uploaded to GCS in the folder: <code className="bg-gray-100 px-2 py-1 rounded">{id}/</code>
+                This event may not be completed yet, or photos are still being uploaded. Please check back a little later.
               </p>
             </div>
           ) : (
