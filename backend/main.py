@@ -84,6 +84,19 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {
+        "message": "Event Photo Gallery API",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "list_photos": "/list-photos?event_id=<event_id>",
+            "status": "/status"
+        }
+    }
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
