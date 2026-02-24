@@ -6,7 +6,7 @@ import Link from "next/link";
 import { PhotoGrid } from "@/app/components/PhotoGrid";
 import { ImageViewer } from "@/app/components/ImageViewer";
 import { Toast } from "@/app/components/Toast";
-import { ArrowLeft, Loader } from "lucide-react";
+import { ArrowLeft, ArrowUp, Loader } from "lucide-react";
 
 export default function EventGallery() {
   const params = useParams();
@@ -17,6 +17,7 @@ export default function EventGallery() {
   const [error, setError] = useState<string>("");
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [showToast, setShowToast] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
 
   // Fetch event photos on mount
   useEffect(() => {
@@ -46,6 +47,21 @@ export default function EventGallery() {
       fetchPhotos();
     }
   }, [id]);
+
+  // Handle scroll visibility for scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollToTop(window.scrollY > 300);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Scroll to top function
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // Format event name for display
   const formatEventName = (eventId: string) => {
@@ -143,6 +159,17 @@ export default function EventGallery() {
           initialIndex={viewerIndex}
           onClose={closeViewer}
         />
+      )}
+
+      {/* Scroll to top button */}
+      {showScrollToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-3 shadow-lg transition-all duration-300 ease-in-out z-50"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="h-6 w-6" />
+        </button>
       )}
     </div>
   );

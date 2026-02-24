@@ -21,12 +21,12 @@ const WEDDING_EVENTS = [
     icon: Music,
     color: 'bg-pink-500',
   },
-  {
-    id: 'mehendi',
-    name: 'Mehendi',
-    description: 'Henna ceremony',
-    icon: Heart,
-    color: 'bg-orange-500',
+   {
+    id: 'groom',
+    name: 'Groom To Be',
+    description: 'Musical evening celebration',
+    icon: Music,
+    color: 'bg-blue-500',
   },
   {
     id: 'wedding',
@@ -35,6 +35,8 @@ const WEDDING_EVENTS = [
     icon: Users,
     color: 'bg-red-500',
   },
+
+
   // Add more events as needed
 ];
 
