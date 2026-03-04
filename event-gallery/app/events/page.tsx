@@ -35,6 +35,13 @@ const WEDDING_EVENTS = [
     icon: Users,
     color: 'bg-red-500',
   },
+  {
+    id: 'couple',
+    name: 'Couple Shoot',
+    description: 'Post-wedding celebration',
+    icon: Heart,
+    color: 'bg-purple-500',
+  },
 
 
   // Add more events as needed
